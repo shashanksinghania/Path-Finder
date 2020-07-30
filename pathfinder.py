@@ -118,7 +118,7 @@ def draw_grid_lines(win, rows, win_width):
         pygame.draw.line(win, GREY, (0, i * cube_width), (win_width, i * cube_width))
         pygame.draw.line(win, GREY, (i * cube_width, 0), (i * cube_width, win_width))
 
-
+# Draw the grid, call after make grid
 def draw(win, grid, rows, win_width):
     win.fill(WHITE)
 
