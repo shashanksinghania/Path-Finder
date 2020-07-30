@@ -73,8 +73,21 @@ class Cube:
     def draw_itself(self, screen):
         pygame.draw.rect(screen, self.color, (self.x, self.y, self.width, self.width))
 
-    def update_neighbours(self):
-        pass
+    # Checks and adds all possible neighbours if they are not barriers
+    def update_neighbours(self, grid):
+        self.neighbours = []
+        # Check the spot underneath
+        if self.row + 1 < self.total_rows and not grid[self.row + 1][self.column].is_barrier():
+            self.neighbours.append(grid[self.row + 1][self.column])
+        # Checks the spot above
+        if self.row > 0 and not grid[self.row - 1][self.column].is_barrier():
+            self.neighbours.append(grid[self.row - 1][self.column])
+        # Checks the spot to the right
+        if self.column + 1 < self.total_rows and not grid[self.row][self.column + 1].is_barrier():
+            self.neighbours.append(grid[self.row][self.column + 1])
+        # Checks the spot to the left
+        if self.column > 0 and not grid[self.row][self.column - 1].is_barrier():
+            self.neighbours.append(grid[self.row][self.column - 1])
 
     def __lt__(self):
         pass
@@ -166,6 +179,10 @@ def main(win, win_width):
                 if spot == end:
                     end = None
                 spot.reset()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE and not started:
+                    pass
     pygame.quit()
 
 
