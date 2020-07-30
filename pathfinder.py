@@ -1,4 +1,5 @@
 import pygame
+from queue import PriorityQueue
 
 # Make a new window with pygame
 WINDOW_WIDTH = 800
@@ -111,12 +112,70 @@ def make_grid(rows, grid_width):
             grid[i].append(spot)
     return grid
 
+def construct_path(source_list, curr, draw):
+    while curr in source_list:
+        curr = source_list[curr]
+        curr.make_path()
+        draw()
+
+def execute_algo(draw, grid, start, end):
+    order = 0
+    q = PriorityQueue()
+
+    # order is just to break ties
+    q.put((0, order, start))
+    source = {}
+
+    # Set the g-score of all spots to infinity except start node
+    g_score = {spot: float("inf") for row in grid for spot in row}
+    g_score[start] = 0
+
+    # Set the f-score of all spots to infinity except start node
+    f_score = {spot: float("inf") for row in grid for spot in row}
+    f_score[start] = heuristic(start.get_pos(), end.get_pos())
+
+    # visited set to check what is in the q
+    visited_set = {start}
+
+    while not q.empty():
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+        current = q.get()[2]
+        visited_set.remove(current)
+
+        if current == end:
+            construct_path(source, end, draw)
+            end.make_end_node()
+            start.make_start_node()
+            return True
+        for neighbour in current.neighbours:
+            new_g_score = g_score[current] + 1
+            if new_g_score < g_score[neighbour]:
+                source[neighbour] = current
+                g_score[neighbour] = new_g_score
+                f_score[neighbour] = new_g_score+heuristic(neighbour.get_pos(), end.get_pos())
+                if neighbour not in visited_set:
+                    order += 1
+                    q.put((f_score[neighbour], order, neighbour))
+                    visited_set.add(neighbour)
+                    neighbour.unvisit()
+        draw()
+
+        if current != start:
+            current.visit()
+
+    return False
+
+
+
 
 def draw_grid_lines(win, rows, win_width):
     cube_width = win_width // rows
     for i in range(rows):
         pygame.draw.line(win, GREY, (0, i * cube_width), (win_width, i * cube_width))
         pygame.draw.line(win, GREY, (i * cube_width, 0), (i * cube_width, win_width))
+
 
 # Draw the grid, call after make grid
 def draw(win, grid, rows, win_width):
@@ -147,14 +206,11 @@ def main(win, win_width):
     end = None
 
     run = True
-    started = False
     while run:
         draw(win, grid, NUM_ROWS, win_width)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
-            if started:
-                continue
             if pygame.mouse.get_pressed()[0]:
                 # left btn pressed
                 pos = pygame.mouse.get_pos()
@@ -181,8 +237,15 @@ def main(win, win_width):
                 spot.reset()
 
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE and not started:
-                    pass
+                if event.key == pygame.K_SPACE and end and start:
+                    for row in grid:
+                        for spot in row:
+                            spot.update_neighbours(grid)
+                    execute_algo(lambda: draw(win, grid, NUM_ROWS, win_width), grid, start, end)
+                if event.key == pygame.K_r:
+                    start = None
+                    end = None
+                    grid = make_grid(NUM_ROWS, win_width)
     pygame.quit()
 
 
